@@ -1,6 +1,7 @@
 package com.ideascale.ems.service;
 
 import com.ideascale.ems.exceptions.EmployeeAttendanceException;
+import com.ideascale.ems.models.Address;
 import com.ideascale.ems.models.Attendance;
 import com.ideascale.ems.models.Employee;
 import com.ideascale.ems.repositories.AttendanceRepository;
@@ -31,6 +32,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private AttendanceRepository attendanceRepository;
 
 
+    // Create a new Employee
     @Override
     @Transactional
     public Employee createEmployee(Employee employee) {
@@ -41,17 +43,24 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.save(employee);
     }
 
-    @Override
+    // Update an existing Employee
     @Transactional
     public Employee updateEmployeeById(Long id, Employee employee) {
-        if (!employeeRepository.existsById(id)){
-            throw new EntityNotFoundException("Employee not found in the database with ID: " + id);
-        }
+        Optional<Employee> optionalEmployee = employeeRepository.findById(id);
+        optionalEmployee.orElseThrow(() ->
+                new EntityNotFoundException("Employee not found in the database with ID: " + id));
+
+        Employee currentEmployee = optionalEmployee.get();
         employee.setId(id);
+
+        Address currentAddress = currentEmployee.getAddress();
+        employee.getAddress().setId(currentAddress.getId());
+
         Employee updatedEmployee = employeeRepository.save(employee);
         return updatedEmployee;
     }
 
+    // Delete an existing employee
     @Override
     @Transactional
     public void deleteEmployeeById(Long id) {
@@ -61,6 +70,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.deleteById(id);
     }
 
+    // Get employee by ID
     @Override
     @Transactional
     public Employee getEmployeeById(Long id) {
@@ -70,12 +80,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         return optionalEmployee.get();
     }
 
+    // Get all employees from the database
     @Override
     @Transactional
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAll();
     }
 
+    // Get employee attendance record
     @Transactional
     public List<Attendance> findAllAttendanceByEmployeeId(Long id){
         if (!employeeRepository.existsById(id)){
@@ -85,6 +97,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         return attendanceRepository.findAllByEmployeeId(id);
     }
 
+    // Set Employee attendance record
+    // This function simulates the punch machine
     @Transactional
     public void setEmployeeAttendance(Long id) throws EmployeeAttendanceException {
         Optional<Employee> optionalEmployee = employeeRepository.findById(id);
@@ -106,13 +120,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     }
 
+    // Set employee checkin record
     private void setEmployeeCheckIn(Employee employee, Attendance attendance) throws EmployeeAttendanceException {
         LocalTime checkInTime = LocalTime.parse(CHECK_IN_TIME);
         LocalTime checkOutTime = LocalTime.parse(CHECK_OUT_TIME);
         LocalTime currentTime = LocalTime.now();
 
         if (currentTime.isAfter(checkOutTime)) {
-            throw new EmployeeAttendanceException("Employee can't check-in after the checkout time " + CHECK_OUT_TIME);
+            throw new EmployeeAttendanceException("Employee can't check-in after the checkout time: " + CHECK_OUT_TIME);
         } else if (currentTime.isBefore(checkInTime.plus(CONSIDERABLE_MINUTES_AFTER_CHECK_IN_TIME, ChronoUnit.MINUTES))) {
             attendance.setDate(LocalDate.now());
             attendance.setCheckIn(currentTime);
@@ -128,6 +143,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    // Set employee checkout record
     private void setEmployeeCheckOut(Employee employee, Attendance attendance) {
         LocalTime checkOutTime = LocalTime.parse(CHECK_OUT_TIME);
         LocalTime currentTime = LocalTime.now();
@@ -148,6 +164,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    // Set total work-hour spent in minutes
     private void setDurationTime(Attendance attendance, LocalTime checkIn, LocalTime checkOut) {
         Duration workDuration = Duration.between(checkIn, checkOut);
         attendance.setWorkDuration(workDuration.toMinutes());

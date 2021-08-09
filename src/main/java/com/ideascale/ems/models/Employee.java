@@ -40,7 +40,7 @@ public class Employee {
 
     private String department;
 
-    @NotNull
+    @NotNull(message = "Employee address can't be null")
     @OneToOne(cascade = {CascadeType.ALL}, orphanRemoval = true)
     @JsonManagedReference
     private Address address;

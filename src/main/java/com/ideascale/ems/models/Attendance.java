@@ -17,7 +17,7 @@ public class Attendance {
 
     private Boolean earlyLeaving = Boolean.TRUE;
 
-    @Column(unique = true)
+    @Column(unique = false)
     private LocalDate date;
 
     // Employee work duration in minutes
