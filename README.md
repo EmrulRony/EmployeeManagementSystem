@@ -3,7 +3,7 @@
 ## Preprequsites
 
 1. JDK 11
-2. Mysq RDBMS
+2. Mysql RDBMS
 
 ## API Documentation
 
